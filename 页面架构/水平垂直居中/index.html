@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>水平垂直居中</title>
+    <style>
+        .parent{
+            background: #999;
+            height: 200px;
+            width: 600px
+        }
+        .child{
+            background: #666;
+        }
+        .parent-1{
+            display: table-cell;
+            vertical-align: middle;
+            text-align: center;
+        }
+        .child-1{
+            display: inline-block;
+        }
+        .parent-2{
+            position: relative;
+        }
+        .child-2{
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50% -50%)
+        }
+        .parent-3{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .child-3{
+            
+        }
+    </style>
+</head>
+<body>
+    <h1>水平垂直居中 inline-block+text-align+table-cell+vertical-align(父元素必须设置定宽定高)</h1>
+    <div class="parent parent-1">
+        <div class="child child-1">
+            demo
+        </div>
+    </div>
+    <h1>水平垂直居中 absolute+tansform（父元素和子元素不用设置宽度和高度）</h1>
+    <div class="parent parent-2">
+        <div class="child child-2">
+            demo
+        </div>
+    </div>
+    <h1>水平垂直居中 flex（兼容性有问题）</h1>
+    <div class="parent parent-3">
+        <div class="child child-3">
+            demo
+        </div>
+    </div>
+</body>
+</html>

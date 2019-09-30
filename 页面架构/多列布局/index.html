@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>多列布局</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin-bottom: 200px;
+        }
+
+        .parent {
+            background: #999;
+        }
+
+        .child {
+            background: #666;
+        }
+
+        img {
+            width: 400px;
+        }
+
+        .left-1 {
+            float: left;
+            width: 100px;
+        }
+
+        .right-1 {
+            margin-left: 100px;
+        }
+
+        .left-2 {
+            float: left;
+            width: 100px;
+        }
+
+        .right-2 {
+            overflow: hidden;
+        }
+
+        .parent-3 {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        .left-3 {
+            display: table-cell;
+            width: 200px;
+        }
+
+        .right-3 {
+            display: table-cell;
+        }
+
+        .parent-4 {
+            display: flex;
+        }
+
+        .left-4 {
+            width: 200px;
+        }
+
+        .right-4 {
+            flex: 1;
+        }
+
+        /* 不定宽+自适应 */
+        .parent-5 {}
+
+        .left-5 {
+            float: left;
+        }
+
+        .right-5 {
+            overflow: hidden;
+        }
+
+        .parent-6 {
+            display: table;
+            width: 100%;
+        }
+
+        .left-6 {
+            display: table-cell;
+            width: 0.1%;
+        }
+
+        .right-6 {
+            display: table-cell
+        }
+
+        .parent-7 {
+            display: flex;
+        }
+
+        .left-7 p {
+            width: 100px;
+        }
+
+        .right-7 {
+            flex: 1
+        }
+
+        /* 等宽布局 */
+        .box {
+            background: #999;
+        }
+
+        .item {
+            background: #666;
+        }
+
+        .box-1 {
+            margin-left: -20px;
+            overflow: hidden;
+
+        }
+        
+        .item-1 {
+            float: left;
+            width: 20%;
+            padding-left: 20px;
+            background-clip: content-box;
+        }
+        
+        .box-2 {
+            margin-left: -20px;
+
+        }
+        .item-fix{
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+        .item-2 {
+            display: table-cell;
+            padding-left: 20px;
+            background-clip: content-box;
+        }
+
+        .box-3 {
+           display: flex;
+
+        }
+        .item-3 {
+            flex:1;
+            margin-left: 20px;
+        }
+        .wrap-1{
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+        }
+        .right1{
+            display: table-cell;
+        }
+        .left1{
+            display: table-cell;
+            border-right: 20px solid transparent;
+            background-clip: padding-box;
+            width: 100px;
+        }
+        .wrap-2{
+            display: flex;
+        }
+        .right2{
+            flex: 1
+        }
+        .left2{
+            display: table-cell;
+            margin-right: 20px;
+            width: 100px;
+        }
+        .wrap-3{
+            overflow: hidden;
+        }
+        .right3{
+           overflow: hidden;
+        }
+        .left3{
+            float: left;
+           width: 200px;
+           margin-right: 20px;
+        }
+        .left3,.right3{
+            padding-bottom: 9999px;
+            margin-bottom: -9999px;
+        }
+        .wrap-3{
+            
+        }
+    </style>
+
+</head>
+
+<body>
+    <h1>顶宽+自适应 float+margin</h1>
+    <div class="parent">
+        <div class="left-1">
+            <p>left</p>
+        </div>
+        <div class="child right-1">
+            <p>right-2</p>
+            <p>right-2</p>
+        </div>
+    </div>
+    <h1>顶宽+自适应 float+overflow</h1>
+    <div class="parent">
+        <div class="left-2">
+            <p>left</p>
+        </div>
+        <div class="child right-2">
+            <p>right-2</p>
+            <p>right-2</p>
+        </div>
+    </div>
+    <h1>顶宽+自适应 table</h1>
+    <div class="parent parent-3">
+        <div class="left-3">
+            <p>left</p>
+        </div>
+        <div class="child right-3">
+            <p>right-2</p>
+            <p>right-2</p>
+        </div>
+    </div>
+    <h1>顶宽+自适应 flex</h1>
+    <div class="parent parent-4">
+        <div class="left-4">
+            <p>left</p>
+        </div>
+        <div class="child right-4">
+            <p>right-2</p>
+            <p>right-2</p>
+        </div>
+    </div>
+    ///////////////////////////////
+    <h1>不定宽+自适应 float + overflow</h1>
+    <div class="parent parent-5">
+        <div class="left-5">
+            <p>left</p>
+        </div>
+        <div class="child right-5">
+            <p>right-2</p>
+            <p>right-2</p>
+        </div>
+    </div>
+    <h1>不定宽+自适应 table</h1>
+    <div class="parent parent-6">
+        <div class="left-6">
+            <p>left</p>
+        </div>
+        <div class="child right-6">
+            <p>right-2</p>
+            <p>right-2</p>
+        </div>
+    </div>
+    <h1>不定宽+自适应 flex</h1>
+    <div class="parent parent-7">
+        <div class="left-7">
+            <p>left</p>
+        </div>
+        <div class="child right-7">
+            <p>right-2</p>
+            <p>right-2</p>
+        </div>
+    </div>
+    --------------------等宽布局-------------------------
+    <h1>等宽多列布局 float</h1>
+    <img src="../images/等宽布局.png" alt="">
+    <div class="box box-1">
+        <div class="item item-1">1</div>
+        <div class="item item-1">2</div>
+        <div class="item item-1">3</div>
+        <div class="item item-1">4</div>
+        <div class="item item-1">5</div>
+    </div>
+    <h1>等宽多列布局 table</h1>
+    <div class="box box-2">
+        <div class="item-fix">
+            <div class="item item-2">1</div>
+            <div class="item item-2">2</div>
+            <div class="item item-2">3</div>
+            <div class="item item-2">4</div>
+            <div class="item item-2">5</div>
+        </div>
+    </div>
+    <h1>等宽多列布局 flex</h1>
+    <div class="box box-3">
+        <div class="item item-3">1</div>
+        <div class="item item-3">2</div>
+        <div class="item item-3">3</div>
+        <div class="item item-3">4</div>
+        <div class="item item-3">5</div>
+    </div>
+    --------------------等高布局-------------------------
+    <h1>等高布局 table</h1>
+    <div class="box wrap-1">
+        <div class="item left1">
+            <p>left</p>
+        </div>
+        <div class="item right1">
+            <p>righ</p>
+            <p>right</p>
+        </div>
+    </div>
+    <h1>等高布局 flex</h1>
+    <div class="box wrap-2">
+        <div class="item left2">
+            <p>left</p>
+        </div>
+        <div class="item right2">
+            <p>righ</p>
+            <p>right</p>
+        </div>
+    </div>
+    <h1>等高布局 float</h1>
+    <div class="box wrap-3">
+        <div class="item left3">
+            <p>left</p>
+        </div>
+        <div class="item right3">
+            <p>righ</p>
+            <p>right</p>
+        </div>
+    </div>
+</body>
+
+</html>

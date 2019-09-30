@@ -1,0 +1,36 @@
+.parent{
+    background: #999;
+}
+.child{
+    background: #666;
+}
+.parent-center1{
+    text-align: center;
+}
+.child-center1{
+    display: inline-block
+}
+
+.parent-center-2{
+    
+}
+.child-center-2{
+    display:table;
+    margin:0 auto;
+}
+.parent-center-3{
+    position: relative;
+    height: 30px;
+}
+.child-center-3{
+    position: absolute;
+    left:50%;
+    transform: translateX(-50%)
+}
+.parent-center-4{
+    display: flex;
+    justify-content: center;
+}
+.child-center-4{
+    /* margin: 0 auto; */
+}

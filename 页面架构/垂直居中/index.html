@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>垂直居中</title>
+    <style>
+        .parent{
+            background: #999;
+            height: 100px;
+        }
+        .child{
+            background: #666;
+        }
+        .parent-1{
+            display: table-cell;
+            vertical-align: middle;
+        }
+        .child-1{
+            
+        }
+        .parent-2{
+            position: relative;
+        }
+        .child-2{
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%)
+        }
+        .parent-3{
+            display: flex;
+            align-items: center;
+        }
+        .child-3{
+        }
+    </style>
+</head>
+<body>
+    <h1>垂直居中 table-cell +　vertical-align</h1>
+    <div class="parent parent-1">
+        <div class="child child-1">
+            demo
+        </div>
+    </div>
+    <h1>垂直居中 absolute+transform</h1>
+    <div class="parent parent-1">
+        <div class="child child-1">
+            demo
+        </div>
+    </div>
+    <h1>垂直居中 flex+align-items(有兼容性问题)</h1>
+    <div class="parent parent-1">
+        <div class="child child-1">
+            demo
+        </div>
+    </div>
+</body>
+</html>
