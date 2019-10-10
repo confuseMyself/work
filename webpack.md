@@ -74,7 +74,7 @@ module.exports = {
 ## 1、直接指定出口与入口
 webpack-cli --entry <entry> --output <output>
 ## 2、通过配置文件打包
-1.不指定配置文件名打包：直接使用webpack
+1.不指定配置文件名打包：直接在命令行输入webpack
 2.指定配置文件名打包： webapck --config <configfile>
 ## 3、全局webpack和局部webpack
 - 全局webpack：通过-g安装的webpack为全局webpack，可以在命令行里直接输入webpack命令的为全局webpack
@@ -100,7 +100,7 @@ module.exports = {
             /**
              * 编译js，主要是将es6，es7的语法编译成浏览器支持的es5，
              * 所需要的loader：babel-loader，@babel/core（用来解析babel-loader的）；
-             * 除了安装上述两个babel的loader之外，还必须安装babel的插件，babel-preset,告诉babel按照哪个规范编译
+             * 除了安装上述两个babel的loader之外，还必须安装babel的插件，babel-preset的插件,告诉babel按照哪个规范编译
              * babel-preset是存储JavaScript不同标准的插件，通过使用正确presets，告诉babel按照哪个规范编译；
              * presets的常见规范：es2015，es2016,es2017,env(es2015，es2016,es2017以及多种浏览器的支持规范,通常采用),babel-preset-stage
              *
@@ -115,7 +115,7 @@ module.exports = {
                             "@babel/preset-env", // 需要通过npm 安装@babel/preset-env这个babel插件
                             {
                                 targets:{
-                                    browsers:[">1%"] // 安装全世界浏览器占有率超过1%的兼容的js打包
+                                    browsers:[">1%"] //配置安装全世界浏览器占有率超过1%的兼容的js打包
                                 }
                             }
                         ]
@@ -163,7 +163,7 @@ module.exports = {
             /**
              * 编译js，主要是将es6，es7的语法编译成浏览器支持的es5，
              * 所需要的loader：babel-loader，@babel/core（用来解析babel-loader的）；
-             * 除了安装上述两个babel的loader之外，还必须安装babel的插件，babel-preset,告诉babel按照哪个规范编译
+             * 除了安装上述两个babel的loader之外，还必须安装babel的插件，babel-preset的插件,告诉babel按照哪个规范编译
              * babel-preset是存储JavaScript不同标准的插件，通过使用正确presets，告诉babel按照哪个规范编译；
              * presets的常见规范：es2015，es2016,es2017,env(es2015，es2016,es2017以及多种浏览器的支持规范,通常采用),babel-preset-stage
              */
@@ -176,7 +176,7 @@ module.exports = {
                             "@babel/preset-env", // 需要通过npm 安装@babel/preset-env这个babel插件
                             {
                                 targets:{
-                                    browsers:[">1%"] // 安装全世界浏览器占有率超过1%的兼容的js打包
+                                    browsers:[">1%"] // 配置全世界浏览器占有率超过1%的兼容的js打包
                                 }
                             }
                         ]
@@ -187,7 +187,7 @@ module.exports = {
                      * 注意：babel-plugin-transform-runtime babel-runtime 作为babel的插件，必须跟@babel/core的版本相同
                      * 如果之前安装@babel/core，则安装runtime时必须安装@babel版本的runtime
                      * npm install @babel/plugin-transform-runtime @babel/runtime 
-                     * babel-plugin-transform-runtime 原理：用es5重写es6对象的局部对象，对没有使用到的方法则不会重写；
+                     * babel-plugin-transform-runtime 原理：生成用es5重写es6的局部对象，对没有使用es6到的方法则不会重写；
                      */
                     plugins:[
                         [
