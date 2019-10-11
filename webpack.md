@@ -1,4 +1,9 @@
 # webpack 基础知识
+
+![CDD917EF-D24E-4b0a-AC4E-CDB60FB291D2](C:\Users\37364\Desktop\CDD917EF-D24E-4b0a-AC4E-CDB60FB291D2.png)
+
+
+
 # 1、前端工程化
 ## 什么是前端工程化
 - 工程化是系统化、模块化、规范化的过程；
