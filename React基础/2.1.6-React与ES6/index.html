@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+
+<body>
+
+</body>
+
+</html>
+<script>
+    function getMaxAndMin(arry) {
+        if (arry == null || toString.call(arry) !== "[object Array]" || !arry.length) return arry;
+        var max, min;
+        arry.forEach(function (item) {
+            max == null && (max = item);
+            min == null && (min = item);
+            if (item > max) {
+                max = item
+            };
+            if (item < min) {
+                min = item
+            }
+        });
+        return {
+            max: max,
+            min: min
+        }
+
+    }
+    getMaxAndMin(123)
+
+    function shuffle(arr) {
+        if (toString.call(arr) != "[object Array]") {
+            return arr
+        };
+        var i = arr.length, t, j, arr = JSON.parse(JSON.stringify(arr));
+        while (i) {
+
+            j = Math.floor(Math.random() * i--); //!!!
+
+            t = arr[i];
+
+            arr[i] = arr[j];
+
+            arr[j] = t;
+
+        }
+        return arr
+    } 
+
+
+//   密码长度6-12位，由数字、小写字符、大写字母组成，但必须至少包括2种字符。
+// aaaaAAAA aaaa123  AAAA123aa
+// 1、验证是否包含大写字母和小写字母 ； 2、验证是否包含数字
+
+// var reg = /(([A-Z][a-z]+)|([A-Za-z][0-9]+))$/
+
+// var reg = /^[a-zA-Z][a-zA-Z0-9]{1,5}$/g
+// var reg = /^([A-Z]?[a-z0-9]+|[a-z][A-Z0-9]+|[0-9][A-Za-z]+)$/
+// var reg = /(?[A-Za-z][0-9]+)|([a-z][A-Z]+)/
+var reg = /(?=.*\d)(?=.*[a-zA-Z])(^[A-Za-z0-9]+$)|(?=.*[A-Z])(?=.*[a-z])(^[A-Za-z0-9]+$)/
+function test(str){
+    var reg = /(?=.*\d)(?=.*[a-zA-Z])(^[A-Za-z0-9]{6,12}$)|(?=.*[A-Z])(?=.*[a-z])(^[A-Za-z0-9]{6,12}$)/;
+    return reg.test(str)
+}
+
+// 12345678 转化为 12,345,678
+function formatter(num){
+    // 错误处理
+    if(typeof num === "number" || typeof num === "string"){
+        num = num+"";
+    }else{
+        return num
+    }
+    var reg = /\B(?=(?:\d{3})+\b)/g;
+   return num.replace(reg, ',');
+}
+</script>
