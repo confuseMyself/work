@@ -1,0 +1,43 @@
+html,body,div,p,li{
+  margin: 0;
+  padding: 0;
+}
+#root{
+
+}
+
+.app-content{
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  flex-direction: column;
+  //flex-direction: row;
+}
+
+.app-header{
+  height: 60px;
+  border-bottom: 1px solid #f4f4f4;
+  background: #1890ff;
+  color: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  line-height: 60px;
+  align-items: center;
+  padding: 0 12px;
+}
+
+.app-body{
+  flex: 1;
+
+  display: flex;
+  justify-content: space-between;
+}
+
+.app-body__sider{
+  width: 150px;
+  border-right: 1px solid #f4f4f4;
+  background: #000c17;
+}
+.app-body__content{
+  flex: 1;
+}

@@ -1,0 +1,9 @@
+sonar_analyze:
+  stage: build
+  image: dev-registry.be.mi.com/info/sonar-scanner:latest
+  script:
+    - curl -L https://micode.be.xiaomi.com/zhengwei6/sonar-utils/raw/master/sonar_analyze.sh | sh -
+  only:
+    - RELEASE
+  except:
+    - tags

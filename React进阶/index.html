@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Proxy</title>
+</head>
+<body>
+    
+</body>
+</html>
+<script>
+ var obj = {
+    name:"zcd",
+    age:31,
+    child:{name:"zsq",age:2}
+}
+var handler = {
+    get :function(target,key){
+        console.log(target,key);
+        return target[key]
+    },
+    set: function(target, key, value) {
+     console.log(`${key} 被设置为 ${value}`);
+     target[key] = value;
+   }
+}
+var p = new Proxy(obj,handler)
+</script>

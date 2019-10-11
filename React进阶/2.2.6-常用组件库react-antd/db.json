@@ -1,0 +1,12 @@
+{
+  "user":[
+    {
+      "name":"ryan","pwd":"123","sex":"man","id":1
+    }
+  ],
+  "init":[{
+    "username":"ryan",
+    "country":"cn",
+    "lesson":"react"
+  }]
+}

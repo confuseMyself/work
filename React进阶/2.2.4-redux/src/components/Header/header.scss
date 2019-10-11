@@ -1,0 +1,25 @@
+.wrap {
+  height: 60px;
+  background-color: #20232a;
+  .navBox {
+    float: right;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    .navLink {
+      line-height: 30px;
+      font-size: 15px;
+      padding: 15px 0;
+      margin-right: 25px;
+      cursor: pointer;
+      color: #fff;
+      text-decoration: none;
+      &:hover {
+        color:#81d8f7
+      }
+      &.active {
+        color: #81d8f7
+      }
+    }
+  }
+}
