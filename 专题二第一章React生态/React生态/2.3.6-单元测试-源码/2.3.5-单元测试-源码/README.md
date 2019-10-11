@@ -1,1 +1,0 @@
-jest __test__
