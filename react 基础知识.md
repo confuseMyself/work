@@ -153,6 +153,29 @@ import { useStrict } from 'mobx';
 useStrict(true);
 ```
 那么将会限制开发者只能通过 @action 来修改 state，这将会更有利于组织代码以及使数据流更清晰。
+# 17、 react hook 使用
+
+```
+import React, { useState, useEffect } from 'react';
+const element = (props) => {
+    const [data, setData] = useState(1)
+    useEffect(() => {
+        // componentDidMount
+        // 直接使用return返回一个函数，这个函数在componentWillUnmount时执行
+        return () => {
+            console.log('will unmount');
+        }
+    }, []); // []相当于组件挂载完成,useEffect不带第二个参数，表示componentDidMount和componentDidUpdate都会执行
+    return (
+        <div className="page">
+
+            {/* 相当于react setState({data:456}) */}
+            {setData(456)}
+        </div>
+    );
+}
+```
+
 
 
 
