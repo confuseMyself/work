@@ -209,3 +209,74 @@ const element = (props) => {
 
 ## 2、非受控组件
 
+表单的数据不受props，state的变化，通过ref来操作dom直接获取表单数据。
+
+```
+class NameForm extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleSubmit = this.handleSubmit.bind(this);
+    /**React 16.3版本后，使用此方法来创建ref。将其赋值给一个变量，通过ref挂载在dom节点或组件上，该ref的current属性将能拿到dom节点或组件的实例**/
+    this.input = React.createRef(); 
+  }
+
+  handleSubmit(event) {
+    alert('A name was submitted: ' + this.input.current.value);
+    event.preventDefault();
+  }
+
+  render() {
+    return (
+      <form onSubmit={this.handleSubmit}>
+        <label>
+          Name:
+          <input type="text" ref={this.input} />
+        </label>
+        <input type="submit" value="Submit" />
+      </form>
+    );
+  }
+}
+```
+
+# 19、react-dom 三个基本方法
+
+## 1、ReactDOM.render
+
+render用于将React渲染的虚拟DOM渲染到浏览器DOM，一般在顶层组件使用。该方法把元素挂载到 container 中，并且返回 element 的实例（即 refs 引用），如果是无状态组件，render 会返回 null。当组件装载完毕时，callback 就会被调用
+
+```
+import ReactDOM from 'react-dom';
+
+ReactDOM.render(<Example />, document.getElementById('root'));
+```
+
+## 2、ReactDOM.findDOMNode 
+
+findDOMNode用于获取真正的DOM元素，以便对DOM节点进行操作 ;
+
+在此之前，首先要知道：在React中，虚拟DOM真正被添加到HTML中转变为真实DOM是在组件挂载（render()）后，故而我们可以在componentDidMount和componentDidUpdate这两个方法中获取。
+
+ 
+
+```
+import { findDOMNode } from 'react-dom';
+
+<Example ref={ node=>{ this.node = node} }> // 利用ref获取Example组件的实例
+
+const dom = findDOMNode(this.node); // 通过findDOMNode获取实例对应的真实DOM
+```
+
+ 注意：当涉及复杂操作时，还有很多元素DOM API可用，然而DOM操作会对性能产生很大影响，所以，应当尽量减少DOM操作。 
+
+## 3、unmountComponentAtNode
+
+ unmountComponentAtNode用于执行卸载操作，执行在componentWillUnmount之前 
+
+
+
+```
+ReactDOM.unmountComponentAtNode(document.getElementByTagName('body'));// 把body下面的react元素卸载掉
+```
+
+ 
