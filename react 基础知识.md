@@ -13,7 +13,7 @@ key的作用主要是用来减少没必要的diff算法对比，因为对于一�
 
 流程图如下所示
 
-![](C:\Users\37364\Desktop\react key作用.png)
+![图片加载失败](https://github.com/confuseMyself/work/blob/master/react%20key%E4%BD%9C%E7%94%A8.png)
 
 
 
