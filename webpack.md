@@ -52,7 +52,7 @@ module.exports = {
             use: [
                {
                   loader: 'babel-loader', // 编译es6
-                  option: {}, // loader的配置项
+                  option: {}, // loader的配置项 // loader的顺序是从后往前执行
                }
             ]
          }
@@ -80,7 +80,7 @@ module.exports = {
 webpack-cli --entry <entry> --output <output>
 ## 2、通过配置文件打包
 1.不指定配置文件名打包：直接在命令行输入webpack
-2.指定配置文件名打包： webapck --config <configfile>
+2.指定配置文件名打包： webpack --config <configfile>
 ## 3、全局webpack和局部webpack
 - 全局webpack：通过-g安装的webpack为全局webpack，可以在命令行里直接输入webpack命令的为全局webpack
 - 局部webpack：在项目文件夹下安装的webpack，即安装在项目文件夹里的node_modules里；局部webpack的作用：当我们的项目需求的webpack版本和我们全局的webpack版本不一致时，就需要安装局部的webpack
@@ -247,6 +247,359 @@ tsconfig.json
 
 ```
 
+# 7、css的编译和处理
+
+## 1、如何引入css文件
+
+webpack是以js为入口打包的，那么项目的css怎么引入？
+
+css可以通过js文件引入，但必须使用相应的loader
+
+1. css-loader，让css可以被js正确的引入
+2. style-loader，让css被引入后可以被正确的以一个style标签插入页面
+3. 两者的顺序很重要，要先经过css-loader处理，再由style-loader处理。
+
+## 2、style-loader的核心配置
+
+1. insertAt    style标签插入在哪一块区域
+
+2. insertInto 插入指定的dom
+
+3. singleton 是否合并为一个style标签
+
+4. transform 在浏览器环境下，插入style到页面前，用js对css进行操作
+
+   ```
+   use:[
+       {
+           loader:"style-loader",
+           options:{
+               insertAt:"top" , // 将style标签插入到head的哪个位置，top表示head头，bottom表示head						   // 尾，默认为尾，参数也可以是个对象，
+               insertAt:{
+                   before:"#mydiv", // 表示将style标签插入到某个div前面,一般不会指定
+               },
+               singleton:true, // 将style标签合并，默认为false
+               transform:"./transform.js", // 在浏览器环境下，插入style到页面前，指定js文件对css进                                         // 行操作，指定的路径为相对路径
+           }
+       }
+   ]
+   ```
+
+   ```
+   // transform.js
+    module.exports=function(css){
+    // 里面可以操作window对象
+    // css是字符串，只能对字符串进行操作；
+     if(window.screen.width<500){
+     	css=css.replace('red','yellow');
+     }
+     return css;
+   }
+   ```
+
+   ## 3、css-loader的核心配置
+
+   1. minimize 是否压缩css，webpack4.x中移除
+
+   2. module 是否使用css模块化
+
+   3. alias css中的全局别名 webpack4.x 移除
+
+      ```
+      use:[
+          {
+              loader:"style-loader",
+              options:{
+                  insertAt:"top" , // 将style标签插入到head的哪个位置，top表示head头，bottom表示head						   // 尾，默认为尾，参数也可以是个对象，
+                  insertAt:{
+                      before:"#mydiv", // 表示将style标签插入到某个div前面,一般不会指定
+                  },
+                  singleton:true, // 将style标签合并，默认为false
+                  transform:"./transform.js", // 在浏览器环境下，插入style到页面前，指定js文件对css进                                         // 行操作，指定的路径为相对路径
+              },
+              {
+                   loader:'css-loader',
+                   options:{
+                     modules:{
+                     module:true, // 开启css模块化
+                      localIdentName:'[path][name]_[local]_[hash:4]' // 定制class类名，设置css-modules模式下local类名的命名
+                     }                    
+                   } 
+                 },
+          }
+      ]
+      ```
+
+      ```
+      css module 的使用
+      1. :global(.class|#id) 声明全局规则，凡是这样声明的class，都不会被编译成hash字符串
+      :global(#box) {
+      
+          }
+      :global{
+              #box{
+      
+              }
+          }
+      2. :local(.class) 在局部作用域中声明选择器，建议使用驼峰式命名，这样可以更容易在 js 中引用
+      3. composes: className 用来组合其他类
+      :local(.className) {
+          // ...
+      }
+      :local(.cn) {
+          composes: className; // 组合局部作用域的规则
+          // composes: className from 'xxx.css'; // 组合其他文件中的规则
+      }
+      // js 中引用
+      import styles from 'index.less';
+      
+      export default const Index = () => (
+          <div className={styles.appContainer}>
+              <div className={styles.appBody}></div>
+          </div>
+      );
+      开启了css-module ，必须通过js来控制css，也就是要在js中引入css，通过向js对象一样引用css样式
+      
+      ```
+
+      ## 4、less，sass 预处理语言
+
+      1. less、sass是css预处理语言，用来帮助我们更方便的写css。更方便团队合作
+
+      2. less、sass浏览器无法直接识别，需要编译成css才能被识别。所以我们写的less、sass的文件都需要编译
+
+      3. less、sass编译所需loader
+
+         ```
+         less所需要的loader
+         less
+         less-loader 
+         -----------
+         sass所需要的loader
+         sass-loader
+         node-sass
+         
+         ```
+
+#         5、css提取：如何把css提取为单独的文件
+
+1. 安装对应的插件：extract-text-webpack-plugin
+2. 改造loader处的写法：把use改为使用extract-text-webpack-plugin
+3. 在plugin处添加：把extract-text-webpack-plugin加入到plugin里
+
+```
+版本差异：在webpack3.x中：直接安装npm i extract-text-webpack-plugin webpack --save-dev
+		在webpack4.x中：npm i extract-text-webpack-plugin@next webpack --save-dev
+		必须在局部安装webpack，因为该插件是用局部的webpack打包的
+		
+		
+var extractTextCss=require('extract-text-webpack-plugin');
+module.exports= {
+	entry:{
+	 app:"./app.js",
+	},
+	output:{
+		path:__dirname+"/src/dist",
+		filename:"./[name].bundle.js"
+	},
+ 	resolve:{
+     alias: {
+       a2:"./js/app2.js",
+     }
+ 	},
+	module:{
+		rules: [
+     {
+       test:/\.less$/,
+       use:extractTextCss.extract({
+       // fallback的值是style-loader的配置
+        fallback:{
+           loader:'style-loader',
+           options:{
+            //insertInto:"#mydiv",
+            singleton:true,
+            transform:"./transform.js"
+           }
+         },
+         // use属性的值是css-loader等其它相关配置
+          use:[     
+           {
+             loader:'css-loader',
+             options:{
+               modules:{
+                localIdentName:'[path][name]_[local]_[hash:4]'
+               }                    
+             } 
+           },
+           // 使用postcss-loader 需安装的loader
+           // cnpm install postcss postcss-loader autoprefixer postcss-cssnext --save-dev
+           // 引入的顺序在css-loader之前，在其它预处理语言之后
+           {
+             loader:'postcss-loader', 
+             options:{
+              ident:'postcss', // 给谁使用的
+              // postcss 使用的插件
+              plugins:[
+               require('autoprefixer')({
+                   "overrideBrowserslist":[">1%","last 2 versions"] // 指定浏览器版本，否则不生效
+               }),
+               require('postcss-cssnext')() // 兼容下一代css语法
+              ]
+             }
+           },
+           {
+            loader:'less-loader'
+           }        
+          ]         
+       })
+     }
+		]
+	},
+  plugins:[
+   new extractTextCss({
+    filename:'[name].min.css'
+   })
+  ]
+}
+
+// 在package.json 中统一配置指定autoprefixer，babel-loader的浏览器版本
+{
+  "name": "webpack-3.1.6",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "css-loader": "^3.0.0",
+    "postcss-cssnext": "^3.1.0",
+    "style-loader": "^0.23.1"
+  },
+  "dependencies": {
+    "autoprefixer": "^9.6.1",
+    "extract-text-webpack-plugin": "^4.0.0-beta.0",
+    "less": "^3.9.0",
+    "less-loader": "^5.0.0",
+    "postcss": "^7.0.17",
+    "postcss-loader": "^3.0.0",
+    "webpack": "^4.35.3"
+  },
+  // 在package.json 中统一配置指定autoprefixer，babel-loader的浏览器版本,此处配置了之后，就不用在webpack.config.js 中单独配置了
+  "browserslist": [
+    ">1%",
+    "last 2 versions"
+  ]
+}
 
 
+```
 
+# 8、html的生成
+
+## 1、需要用到的plugin
+
+cnpm install html-webpack-plugin --save-dev
+
+## 2、相关配置
+
+filename：打包生成后html文件的名字，必须的，相对路径
+
+template：指定一个html文件为模版，必须的，相对路径
+
+minify：压缩html
+
+inject：是否把js，css文件插入到html，插入到哪
+
+chunks：多入口时，指定引入chunks
+
+```
+var extractTextCss=require('extract-text-webpack-plugin'); // css代码分离
+var htmlWebpackPlugin=require('html-webpack-plugin'); // 生成html文件
+module.exports= {
+    // 定义多入口
+	entry:{
+	 app:"./app.js",
+	 app2:"./app2.js"
+	},
+	// 定义输出
+	output:{
+		path:__dirname+"/src/dist",
+		filename:"./[name].bundle.js",
+	},
+	// 定义别名
+ 	resolve:{
+     alias: {
+       a2:"./js/app2.js",
+     }
+ 	},
+ 	// 编码规则
+	module:{
+		rules: [
+     {
+       test:/\.less$/,
+       use:extractTextCss.extract({
+        fallback:{
+           loader:'style-loader',
+           options:{
+            //insertInto:"#mydiv",
+            singleton:true,
+            //transform:"./transform.js"
+           }
+         },
+        use:[
+         {
+           loader:'css-loader',
+           options:{
+             modules:{
+              localIdentName:'[path][name]_[local]_[hash:4]'
+             }                    
+           } 
+         },
+         {
+          loader:'less-loader'
+         }        
+        ]
+       })
+     }
+		]
+	},
+	// webpack引入的插件
+  plugins:[
+   new extractTextCss({
+    filename:'[name].min.css'
+   }),
+   new htmlWebpackPlugin({
+   	filename:"index.html", // 必须，指定输入的html文字
+   	template:"./index.html",// 必须,指定html模版
+    chunks:['app'] // 指定引入的入口文件打包之后的文件
+   })
+  ]
+}
+```
+
+9、cross-env：运行跨平台设置和使用环境变量的脚本
+
+要理解 process.env.NODE_ENV 就必须要了解 process，process 是 node 的全局变量，并且 process 有 env 这个属性 ,可以通过cross-env 设置运行跨平台设置和使用环境变量的脚本。 
+
+1、作用：当我们使用 NODE_ENV = production 来设置环境变量的时候，大多数windows命令会提示将会阻塞或者异常，或者，windows不支持NODE_ENV=development的这样的设置方式，会报错。因此 cross-env 出现了。我们就可以使用 cross-env命令，这样我们就不必担心平台设置或使用环境变量了。也就是说 cross-env 能够提供一个设置环境变量的scripts，这样我们就能够以unix方式设置环境变量，然而在windows上也能够兼容的。 
+
+2、安装：npm i cross-env --save-dev 
+
+3、在package.json中的script命令如下设置
+
+```
+"scripts": {
+    "pre": "yarn --registry https://registry.npm.taobao.org || npm install --registry https://registry.npm.taobao.org ",
+    "dev": "cross-env NODE_ENV=development webpack --config webpack.dev.config.js",
+    "build": "cross-env NODE_ENV=production webpack --config webpack.dev.config.js",
+    "lint": "vue-cli-service lint"
+  },
+```
+
+4、通过这样设置 就可以在项目中的任何文件中使用
+
+let env = process.env.NODE_ENV
