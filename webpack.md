@@ -66,7 +66,7 @@ module.exports = {
 
 ```
 
-3.常用的loader列举
+3.常用的loader列举，loader 是 对某种类型的文件的解析，loader的顺序是从下往上加载的
 - css：css-loader,style-loader 等css处理loader
 - url-loader,image-loader 等图片字体文件等资源的处理loader
 - less-loader,sass-loader,babel-loader 等编译的loader
@@ -581,7 +581,7 @@ module.exports= {
 }
 ```
 
-9、cross-env：运行跨平台设置和使用环境变量的脚本
+# 9、cross-env：运行跨平台设置和使用环境变量的脚本
 
 要理解 process.env.NODE_ENV 就必须要了解 process，process 是 node 的全局变量，并且 process 有 env 这个属性 ,可以通过cross-env 设置运行跨平台设置和使用环境变量的脚本。 
 
@@ -603,3 +603,764 @@ module.exports= {
 4、通过这样设置 就可以在项目中的任何文件中使用
 
 let env = process.env.NODE_ENV
+
+# 10、webpack的环境
+
+## 1、为什么要区分环境
+
+在不同的场景下可能需要不同的配置，使用不同的功能，所以要区分环境。
+
+比如：
+
+开发模式：会额外用到一些调试功能，比如webpack-dev-server，但是为了加快调试速度，可能不会用上压缩，tree-shaking之类的功能
+
+生产模式：为了减少文件体积，会使用压缩，tree-shaing等功能，但是不要如webpack-dev-server或者eslint这样的调试工具
+
+## 2、具体列举一下生产环境和开发环境的不同
+
+生产环境：
+
+- 去除无用代码
+- 图片压缩，转码base64，雪碧图
+- 提取公用代码
+
+开发环境
+
+- webpack-dev-server  配置代理
+- source-map
+- 代码风格检查
+
+## 3、如何告诉webpack当前环境
+
+命令：webpack --env  ｛name｝
+
+1. 把开发环境和生产环境的共同配置（公共代码）提取出来，命名为webpack.common.js
+2. 开发环境单独配置webpack代码，并且引入webpack的共同配置，命名为webpack.dev.js
+3. 生产环境单独配置 webpack代码，并且引入webpack的共同配置，命名为webpack.pro.js
+4. 如果是开发环境，使用命令 webpack --config  webpack.dev.js --env dev，进行开发调试
+5. 如果是生产环境，使用命令webpack --config  webpack.pro.js --env pro，进行打包
+
+```
+// webpack.common.js 公共环境的配置文件：生产环境和开发环境都需要的配置提取出来
+const webpack=require('webpack');
+const extractTextCss=require('extract-text-webpack-plugin'); // 提取css代码
+const dev=require('./webpack.dev.js');  // 引入开发环境的特殊配置
+const pro=require('./webpack.pro.js');  // 引入生产环境的特殊配置
+const merge=require('webpack-merge');  // webpack-merge做了两件事：它允许连接数组并合并对象，而不是									 //	覆盖组合。把不同的环境下的webpack配置和公共环境的配置文件                                        // 合并到一起
+module.exports=env=>{
+  var postPlugins=[require('autoprefixer')(), require('postcss-cssnext')()];
+  postPlugins.concat(env==='production'?[require('postcss-sprites')({
+                                            spritePath: 'dist/sprite',
+                                            retina: true
+                                         })]:[])
+  //配置对象
+  var common={
+     entry:'./app.js',
+     output:{
+     	filename:'bundle.js'
+     },
+     module:{
+        rules: [  
+           //js处理
+           {
+            test:/\.js$/,
+            use:
+              {
+                loader:'babel-loader',
+              }
+           },
+           //css处理
+           {
+             test:/\.less$/,
+             use:extractTextCss.extract({
+              fallback:{
+                 loader:'style-loader',
+                 options:{
+                  //insertInto:"#mydiv",
+                  singleton:true,
+                  //transform:"./transform.js"
+                 }
+               },
+                use:[       
+                 {
+                   loader:'css-loader',
+                   options:{
+                     modules:{
+                      localIdentName:'[path][name]_[local]_[hash:4]'
+                     }                    
+                   } 
+                 },
+                 {
+                   loader:'postcss-loader',
+                   options:{
+                    ident:'postcss',
+                    plugins:postPlugins
+                   }
+                 },
+                 {
+                  loader:'less-loader'
+                 }        
+                ]         
+             })
+           },                   
+        ] 
+     },
+     plugins:[
+     //提取额外css文件
+       new extractTextCss({
+        filename:env==='production'?'app.bundle.css':'app.dev.css'
+       })
+     ]
+  };
+  //返回配置对象
+  return merge(common,env==='production'?pro:dev);
+}
+```
+
+## 4、如何编写不同的配置文件来区分环境
+
+1. 编写一个开发环境下的配置文件
+2. 编写一个生产环境下的配置文件
+3. 在基础配置引入开发和生产配置
+4. 判断env参数，合并对应的配置
+
+```
+webpack.dev.js
+const webpack = require('webpack')
+module.exports={
+    devtool: 'cheap-module-source-map',
+    devServer: {
+        port: 9001,
+        overlay: true,
+        hot: true,
+        hotOnly: true,
+    },
+    plugins: [
+        new webpack.HotModuleReplacementPlugin(), // 热更新
+        new webpack.NamedModulesPlugin(), // 显示模块的相对路径
+    ]	
+}
+```
+
+```
+webpack.pro.js
+var webpack = require('webpack')
+var HtmlWebpackPlugin = require('html-webpack-plugin'); // 生成html
+module.exports={
+      optimization: {
+        minimize: false
+      },    
+	plugins:[
+        new HtmlWebpackPlugin({
+            filename: 'index.html',
+            template: './index.html',
+            minify: {
+                collapseWhitespace: true // 开启打包
+            },
+            inject:true, // 生成的js，分离的css是否自动插入到html中
+        }),         	
+	]	
+}
+```
+
+```
+// webpack.common.js 公共环境的配置文件：生产环境和开发环境都需要的配置提取出来
+const webpack=require('webpack');
+const extractTextCss=require('extract-text-webpack-plugin'); // 提取css代码
+const dev=require('./webpack.dev.js');  // 引入开发环境的特殊配置
+const pro=require('./webpack.pro.js');  // 引入生产环境的特殊配置
+const merge=require('webpack-merge');  // webpack-merge做了两件事：它允许连接数组并合并对象，而不是									 //	覆盖组合。把不同的环境下的webpack配置和公共环境的配置文件                                        // 合并到一起
+module.exports=env=>{
+  var postPlugins=[require('autoprefixer')(), require('postcss-cssnext')()];
+  // postcss-sprites是postcss的一个插件，处理雪碧图的
+  postPlugins.concat(env==='production'?[require('postcss-sprites')({
+                                            spritePath: 'dist/sprite',
+                                            retina: true
+                                         })]:[])
+  //配置对象
+  var common={
+     entry:'./app.js',
+     output:{
+     	filename:'bundle.js'
+     },
+     module:{
+        rules: [  
+           //js处理
+           {
+            test:/\.js$/,
+            use:
+              {
+                loader:'babel-loader',
+              }
+           },
+           //css处理
+           {
+             test:/\.less$/,
+             use:extractTextCss.extract({
+              fallback:{
+                 loader:'style-loader',
+                 options:{
+                  //insertInto:"#mydiv",
+                  singleton:true,
+                  //transform:"./transform.js"
+                 }
+               },
+                use:[       
+                 {
+                   loader:'css-loader',
+                   options:{
+                     modules:{
+                      localIdentName:'[path][name]_[local]_[hash:4]'
+                     }                    
+                   } 
+                 },
+                 {
+                   loader:'postcss-loader',
+                   options:{
+                    ident:'postcss',
+                    plugins:postPlugins
+                   }
+                 },
+                 {
+                  loader:'less-loader'
+                 }        
+                ]         
+             })
+           },                   
+        ] 
+     },
+     plugins:[
+     //提取额外css文件
+       new extractTextCss({
+        filename:env==='production'?'app.bundle.css':'app.dev.css'
+       })
+     ]
+  };
+  //返回配置对象
+  return merge(common,env==='production'?pro:dev);
+}
+```
+
+## 5、为了打包方便，在 package.json 里script命令加入命名
+
+```
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack --env production --config webpack.common.js",
+    "dev": "webpack-dev-server --env development --config webpack.common.js"
+  },
+  "ke
+```
+
+## 6、webpack版本差异
+
+在webpack4.x中更简单的环境区分
+
+webpack --mode production/development/none
+
+# 11、PostCSS详解
+
+## 1、什么postcss
+
+PostCSS基于js插件去转换css的一个工具。这些插件支持变量，mixin，未来的css语法，在线图片甚至更多。
+
+所以PostCSS只是一个转化css的工具，让我们更好的去写css；
+
+## 2、postcss一些常用的插件
+
+autoprefixer是PostCSS最著名的一款插件，用来兼容不同浏览器的css语法，不同浏览器加上css前缀 
+postcss-cssnext (内置autoprefixer) 允许你使用未来的css语法，如css4（可以理解为css中的Babel） 
+postcss-sprites 自动制作雪碧图，不用手动拼接啦，哈哈哈 
+cssnano 压缩css代码(如果你是用webpack的话，css-loader集成了cssnano，你不需要再次引入) 
+postcss-hash-classname 把转换后的css文件名附上哈希值 
+pixrem 将rem转换为px 
+postcss-px-to-viewport 将px转换为vh和vw（推荐作为移动端的计量单位，而不是rem） 
+postcss-pxtorem 将px转换为rem
+
+## 3、postcss webpack配置
+
+详见css的编译和处理
+
+# 12、webpack-dev-server 使用
+
+1、什么是webpack-dev-server
+
+- 项目最终都要打包上线，所以最好能模拟线上环境进行开发调试
+- webpack-dev-server就是一个让我们可以模拟线上环境进行项目调试的工具
+
+2、webpack-dev-server 提供的常用功能
+
+- 路径重定向
+- 浏览器中显示编译错误
+- 接口代理
+- 热更新
+
+3、使用步骤
+
+- 安装webpack-dev-server
+
+- 配置 devServer字段
+
+- 利用命令行开启服务
+
+  4、devServer常用配置
+
+  - inline：服务的开启模式
+  - port：代理接口
+  - historyApiFallback：路径重定向
+  - hot：热更新
+  - lazy：懒编译，多入口时，当访问某个入口时，才会对该入口进行编译和服务
+  - overlay：错误遮罩
+  - proxy：代理请求
+
+```
+module:...,
+devServer:{
+        port: 9001, // 代理接口
+        inline:true, // 服务开启模式
+        overlay:true, // 错误遮罩
+        hot:true, // 热更新:在不刷新浏览器的情况下更改代码之后，会在浏览器上面显示更改之后的代码。
+        	      // webpack-dev-server 热更新这个插件，与extract-text-webpack-plugin这个插件不兼                   // 容,所以在开发环境时，需要关闭这个插件，在生产环境时打开这个插件，同时关闭热更新这                   // 个功能。
+        hotOnly:true, // 表示只用热更新，不用dev-loading刷新页面
+        // 对url路径重定向
+        historyApiFallback:{
+          rewrites:[
+           {
+             from:/^\/([ -~]+)/,
+             to:function(context){
+               return './'+context.match[1]+'.html'
+             }
+           }
+          ]
+        },
+        // 代理请求，对webpack-dev-server进行代理转发
+        proxy:{
+          "/smartSpec":{
+            target:"https://mooc.study.163.com/",
+            changeOrigin:true, // 把http请求中的origin字段进行变换，在浏览器收到后端回复的时候，浏览                                // 器会以为这个是本地请求，而在后端那边会以为是站内的调用。这样，通过这                                // 个简单的配置，就完美的解决了跨域的问题。
+            // 对代理路径的一些规则配置，
+            // 表示匹配到/smartSpec/qd以这个开头的路径，代理到/smartSpec/detail/1202816603.htm这个             // 路径上面
+            pathRewrite:{
+              "^/smartSpec/qd":"/smartSpec/detail/1202816603.htm"
+            },
+            // 对代理请求设置请求头的配置
+            headers:{
+                
+            }
+          },
+
+        }
+     },
+      plugins: [
+        new HtmlWebpackPlugin({
+            filename: 'index.html',
+            template: './src/index.html',
+            minify: {
+                collapseWhitespace: true
+            },
+            inject:true,
+        }),     
+      new extractTextCss({
+        filename:"app.bundle.css",
+        disable:false //热更新:在不刷新浏览器的情况下更改代码之后，会在浏览器上面显示更改之后的代码。
+        	         // webpack-dev-server 热更新与extract-text-webpack-plugin这个插件不兼                             // 容,所以在开发环境时，需要关闭这个插件，在生产环境时打开这个插件，同时关闭热更                       // 新这个功能。只需要把disable置为false即可。
+      }),
+    ] 
+```
+
+# 13、souce-map
+
+为了方便调试，我们需要知道打包后的代码对应源文件的位置。
+
+- 如果代码有一处错误，无souce-map只能追踪到错误发生在打包后文件的哪个位置，但是打包后的文件就不方便阅读。
+- 有了souce-map，就可以查看错误发生在原模块的哪个地方。
+
+1、souce-map配置向如下
+
+```
+devtool:'eval-source-map',  
+```
+
+# 14、webpack原理解析
+
+- webpack依赖与node的环境与文件操作系统
+- webpack的打包过程，其实就是利用node去读取文件，然后进行一些字符串处理后，再利用node去写入文件
+
+loader原理
+
+loader其实是一个方法：接收一个字符串，方法内部处理完后再返回字符串。
+
+```
+// resouce表示读取到文件生成的字符串
+module.exports = function(resouce){
+
+    var reg = /console.log\((.+?)\)/g;
+
+    return resouce.replace(reg,"");
+
+}
+```
+
+# 15、webpack等资源的处理
+
+1、需要用到哪些loader
+
+- file-loader：引入各种资源的loader，图片，视频，字体图标等资源
+- url-loader：url-loader是file-loader的二次封装，一般用url-loader来替代file-loader，还增加了一些其它功能；比如把图片转换成base64编码
+- img-loader：用来用来优化图片的，主要用来压缩图片
+- html-loader：处理html里面引入各种资源的loader，默认只会处理某些标签的src属性处理 
+
+2、雪碧图的合成
+
+| postcss-sprites                                              | webpack-spritesmith                                          |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| 属于postcss插件，会自动把css文件中引入的背景图合成雪碧图，并修改css文件 | 属于一个独立的插件，会按照指定的路径指定的图片类型，生成一个雪碧图，和一个雪碧图相关的css，不会修改css |
+
+```
+var extractTextCss = require('extract-text-webpack-plugin');
+var htmlWebpackPlugin = require('html-webpack-plugin');
+const webpackSpriteSmith = require('webpack-spritesmith') // webpack自带的雪碧图插件
+const path = require('path');
+module.exports = {
+  mode: 'development',
+  entry: {
+    app: "./src/app.js",
+  },
+  output: {
+    path: __dirname + "/dist",
+    filename: "./[name].bundle.js",
+    publicPath: "./", // 打包后，指定通过script标签引入html中的css和js的路径的前缀
+  },
+  resolve: {
+    alias: {
+      a2: "./js/app2.js",
+    }
+  },
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        use: extractTextCss.extract({
+          fallback: {
+            loader: 'style-loader',
+            options: {
+              //insertInto:"#mydiv",
+              //transform:"./transform.js"
+            }
+          },
+          use: [
+            {
+              loader: 'css-loader',
+              options: {
+                /*modules:{
+                 localIdentName:'[path][name]_[local]_[hash:4]'
+                }   */
+              }
+            },
+            // postcss-loader本身不具有功能，起作用的是其他的插件，相当于一个插槽
+            // postcss-loader 放在所有css的loader之后
+            // 确定，按照原图的大小生成雪碧图，所以会存在定位误差
+            {
+              loader: "postcss-loader",
+              options: {
+                plugins: [
+                  /* require('postcss-sprites')({
+                     spirtePath:"./dist/assets/sprite" 指定生成的雪碧图存放的位置
+                   })*/
+                ]
+              }
+            }
+          ]
+        })
+      },
+      {
+        test: /\.(png|jpg|jgeg|gif)$/,
+
+        use: [
+          // {
+          //   loader: 'file-loader',
+          //   options: {
+          //     //默认是[hash].[ext]
+          //     name: '[name].[hash:4].[ext]', // name为图片原始文件名， ext为后缀名
+          //     outputPath: "assets/img", // 指定文件打包输出的路径；css里自动会根据打包的路径自动更改为打包后的路径
+          //     publicPath: "assets/img", // 指定打包后的css路径加的路径前缀
+          //   }
+          // },
+          // url-loader 是file-loader的二次封装，一般用来代替file-loader
+          {
+            loader: 'url-loader',
+            options: {
+              //默认是[hash].[ext]
+              name: '[name].[hash:4].[ext]', // name为图片原始文件名， ext为后缀名
+              outputPath: "assets/img", // 指定文件打包输出的路径；css里自动会根据打包的路径自动更改为打包后的路径
+              publicPath: "assets/img", // 指定打包后的css路径加的路径前缀
+              limit: 5000 // 当资源小于5kb时，会把资源转换成base64编码
+            }
+          },
+          // img-loader 用来优化图片的loader，本身不具有功能，通postcss一样，起作用的是其他的插件，相当于一个插槽
+          {
+            loader: 'img-loader',
+            options: {
+              plugins: [
+                require('imagemin-pngquant')({
+                  speed: 2//1-11
+                }),
+                require('imagemin-mozjpeg')({
+                  quality: 80//1-100
+                }),
+                require('imagemin-gifsicle')({
+                  optimizationLevel: 1//1,2,3
+                })
+              ]
+            }
+          },
+        ]
+      },
+      // html-loader 处理html里面引入各种资源的loader
+      // 不引入html-loader，可以通过webpack自带的处理方式，模版语法 <img src="${require('./assets/img/img4.jpg')}"/>
+      // html-loader 默认只会处理某些标签的src属性处理
+      {
+        test: /\.html$/,
+        use: {
+          loader: 'html-loader',
+          options: {
+            attrs: ["img:data-src"]
+          }
+        }
+      },
+      {
+        test: /\.etf$/,
+        use: {
+          loader: 'html-loader',
+          options: {
+            attrs: ["img:data-src"]
+          }
+        }
+      }
+    ]
+  },
+  plugins: [
+    new extractTextCss({
+      filename: '[name].min.css'
+    }),
+    new htmlWebpackPlugin({
+      filename: "index.html",
+      template: "./src/index.html",
+    }),
+    // webpack自带雪碧图的插件配置
+    new webpackSpriteSmith({
+      src: {
+        //图片来源文件夹
+        cwd: path.join(__dirname, "src/assets/img"),
+        //处理什么图片
+        glob: "*.jpg"
+      },
+      target: {
+        //打包到哪
+        image: path.join(__dirname, 'dist/sprites/sprite.png'),
+        css: path.join(__dirname, 'dist/sprites/sprite.css'),
+      },
+      apiOptions: {
+        cssImageRef: "./sprites/sprite.png"
+      }
+    })
+  ]
+}
+```
+
+# 16、代码分割，js代码大小控制
+
+## 1、多页应用：多个入口，多个输出
+
+提取公共依赖：把多个页面的用到的依赖打包成一个单独的文件
+
+## 2、单页应用：单个入口，单个输出
+
+减少文件体积，拆分应用；
+
+把需要异步加载改成异步加载
+
+## 3、总结起来，打包的一般经验规则
+
+| 多页                                         | 单页面应用                                   |
+| -------------------------------------------- | -------------------------------------------- |
+| 用于服务端渲染、前端路由为服务端控制的       | 应用为主，前端路由为hash控制                 |
+| 主业务代码+公共依赖+第三房包+webpack运行代码 | 主业务代码+异步模块+第三方包+webpack运行代码 |
+
+## 4、如何进行代码分割
+
+| webpack3.x                         | webpack4.x             |
+| ---------------------------------- | ---------------------- |
+| webpack自带插件 commonChunksPlugin | SplitChunksPlugin 配置 |
+
+```
+var extractTextCss=require('extract-text-webpack-plugin');
+var htmlWebpackPlugin=require('html-webpack-plugin');
+const webpackSpriteSmith=require('webpack-spritesmith');
+const webpack=require('webpack');
+const UglifyJs=require('uglifyjs-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const path=require('path');
+module.exports= {
+  mode:'production', // webpack4.x之后，把mode设置成production，打包时候会自动开启代码压缩和tree-shaking
+	entry:{
+	 app:"./src/app.js",
+	},
+	output:{
+		path:__dirname+"/dist",
+		filename:"./[name].bundle.js",
+  },
+
+  // optimization属性是webpack4.x里控制代码分割，代码压缩的配置项
+  optimization:{
+    // 控制代码压缩
+    minimize:true,
+    // webpack4.x 通过配置splitChunks来实现代码分割
+    splitChunks:{
+      name:true,
+      chunks:"all", // 有三个值：initial(只对入口文件进行分割)、all（对所有文件进行分割）、async（对异步文件进行分割）
+      minSize:0, // 对大小小于多少的进行提取，代码分割，设置为0表示不管模块大小都进行分割
+      // 对模块的自定义提取
+      cacheGroups:{
+        mode1:{
+          test:/mode1/, //正则表达式，匹配文件名为mode1 的模块
+        },
+        vendor:{
+          test:/([\\/node_modules[\\/])/, // 表示提取node_modules里的第三方模块
+          name:"vendor", // 指定提取出来的名字为vendor
+        },
+      }
+    },
+    // 提出webpack的运行代码
+    runtimeChunk:true
+  },
+	module:{
+		rules: [    
+     {
+       test:/\.css$/,
+       use:extractTextCss.extract({
+        fallback:{
+           loader:'style-loader',
+           options:{
+            //insertInto:"#mydiv",
+            //transform:"./transform.js"
+           }
+         },
+        use:[
+         {
+           loader:'css-loader',
+           options:{
+             /*modules:{
+              localIdentName:'[path][name]_[local]_[hash:4]'
+             }   */                 
+           } 
+         },
+        ]
+       })
+     },
+     {
+      test:/\.(png|jpg|jgeg|gif)$/,
+      use:[
+        {
+          loader:'url-loader',
+          options:{
+            //默认是[hash].[ext]
+            name:'[name].[hash:4].[ext]',
+            outputPath:"assets/img",
+            publicPath:"assets/img",
+            limit:5000
+          }
+        },
+        {
+          loader:'img-loader',
+          options:{
+            plugins:[
+              require('imagemin-pngquant')({
+                speed:2//1-11
+              }),
+              require('imagemin-mozjpeg')({
+                quality:80//1-100
+              }),
+              require('imagemin-gifsicle')({
+                optimizationLevel:1//1,2,3
+              })
+            ]
+          }
+        },
+      ]
+     },
+    {
+      test:/\.html$/,
+      use:{
+        loader:'html-loader',
+        options:{
+          attrs:["img:data-src"]
+        }
+      }
+    } 
+		]
+	},
+  plugins:[
+   new extractTextCss({
+    filename:'[name].min.css'
+   }),
+   new htmlWebpackPlugin({
+   	filename:"index.html",
+   	template:"./src/index.html",
+   }),
+   // 清楚之前的打包dist文件
+   new CleanWebpackPlugin(),
+
+
+   // webpack3.x 代码分割的配置
+   // 拆分 第三房包代码
+   /*new webpack.optimize.CommonsChunksPlugin({
+     name:'vendor',
+     minChunks:'infinity' // 表示无论出现多少次都会拆分
+   }),
+   // 拆分 webpack运行代码
+   new webpack.optimize.CommonsChunksPlugin({
+     name:'manifest',
+     minChunks:'infinity'
+   }),
+
+   // 拆分业务代码
+   new webpack.optimize.CommonsChunksPlugin({
+     name:'app.js',
+     minChunks:2
+   }),*/   
+   //new webpack.optimize.UglifyJsPlugin();
+  ]
+}
+```
+
+5、代码体积控制
+
+- 代码压缩
+- tree-shaking
+
+tree-shaking对export default 出的代码不友好，不能tree-shaking
+
+```
+module.exports=function(){
+	console.log("a");
+	function a(){
+
+	}
+	function b(){
+		
+	}
+}
+// 这种export 的代码不能tree-shaking
+```
+
+```
+// 对这种代码 比较友好
+export const a=function(){
+	console.log('i am a');
+}
+export const b=function(){
+	console.log('i am b');
+}
+```
+

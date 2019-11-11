@@ -43,7 +43,211 @@ react中的状态是state，在组件内通过this.state来调用状态；通过
 ### 2、更新期：？？？？？
 ### 3、销毁期：父组件先被销毁，然后销毁子组件；
 # 9、react 上下文context ？
-react 的上下文context是用于深层次嵌套的组件间的传值。
+**1、react 的上下文context是用于深层次嵌套的组件间的传值。**
+
+**2、react context 使用**
+
+老版本的context 
+
+getChildContext 根组件中声明，一个函数，返回一个对象，就是context
+childContextTypes 根组件中声明，指定context的结构类型，如不指定，会产生错误
+contextTypes 子孙组件中声明，指定要接收的context的结构类型，可以只是context的一部分结构。contextTypes 没有定义，context将是一个空对象。
+this.context 在子孙组件中通过此来获取上下文
+(注:从React v15.5开始 ，React.PropTypes 助手函数已被弃用，可使用 prop-types 库 来定义contextTypes)
+
+举例如下：
+
+```
+
+import React from "react";
+import PropTypes from 'prop-types'
+class Provider extends React.Component{
+    // 根组件中声明，纯函数，返回一个对象，就是context
+	getChildContext () {
+		return this.props.store
+	}
+	// 声明Context对象属性，如不声明，会产生错误
+	static childContextTypes = {
+		name: PropTypes.string,
+		age: PropTypes.number
+	}
+	constructor(props){
+		super(props)
+		this.state = {
+			name: 'provider-user'
+		}
+	}
+	render() {
+		return this.props.children
+	}
+}
+
+class BaseUser extends React.Component{
+	render() {
+		return (
+			<div>
+				{this.props.name}
+			</div>
+		);
+	}
+}
+class BasePost extends React.Component{
+	render() {
+		return (
+			<div>
+				{this.props.age}
+			</div>
+		);
+	}
+}
+// 高阶组件  属性代理
+const connect = (Com) => {
+	class ConnectComponent extends React.Component {
+		// 声明需要使用的Context属性
+		// 声明之后可以直接使用this.context访问
+		static contextTypes = Provider.childContextTypes
+		displayName = Com.displayName
+		render() {
+			return (
+				<Com {...this.context}/>
+			);
+		}
+	}
+	return ConnectComponent
+}
+
+
+const User = connect(BaseUser)
+const Post = connect(BasePost)
+const store = {
+	name: 'ryan',
+	age:10
+}
+
+
+
+class App extends React.Component {
+	render() {
+		return (
+			<Provider store={store}>
+				<div>
+					<User/>
+					<Post/>
+				</div>
+			</Provider>
+		);
+	}
+}
+
+export default App
+
+```
+
+**2、react 新的context api，生产-消费者模式，避免了ShouldComponentUpdate的冲突** 
+
+新版本的React context使用了Provider和Customer模式，和react-redux的模式非常像。在顶层的Provider中传入value， 在子孙级的Consumer中获取该值，并且能够传递函数，用来修改context，如下代码所示： 
+
+```
+import React from 'react';
+import ReactDOM from 'react-dom';
+
+// 创建context实例，生产-消费者模式
+// context 新的api 生产-消费模式 避免了ShouldComponentUpdate的冲突 
+const ThemeContext = React.createContext({
+  background: 'red',
+  color: 'white',
+  func: function () {}
+});
+
+class Header extends React.Component {
+  render() {
+    return (
+      <Title>
+        撒旦法所发生的发生的发生的
+      </Title>
+    );
+  }
+}
+
+class Title extends React.Component {
+  render() {
+    return (
+      // 消费者
+      <ThemeContext.Consumer>
+        {context => (
+          <h1 style={{ background: context.background, color: context.color }}>
+            <button onClick={()=>{context.func("aasdfas")}}>点击向祖父传值</button>
+            {this.props.children}
+          </h1>
+        )}
+      </ThemeContext.Consumer>
+    );
+  }
+}
+
+class App extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+      background: "red",
+      color: "green",
+      buttonContent:"点击换肤",
+    }
+  }
+  clickButton = () => {
+    this.setState({
+      background: "yellow",
+      color: "red"
+    })
+  }
+  passData = (name,...rest) => {
+    this.setState({
+      buttonContent:name
+    })
+  }
+  render() {
+    let { background, color,buttonContent } = this.state;
+    return (
+      <div className="App">
+        <button className="App__button"
+          onClick={this.clickButton}
+        >{buttonContent}</button>
+        {/* 生产者 */}
+        <ThemeContext.Provider value={{ background: background, color: color, func: this.passData }}>
+          <Header />
+        </ThemeContext.Provider>
+      </div>
+
+    );
+  }
+}
+export default App
+```
+
+3、context在如下的生命周期钩子中可以使用
+
+constructor(props, context)
+componentWillReceiveProps(nextProps, nextContext)
+shouldComponentUpdate(nextProps, nextState, nextContext)
+componentWillUpdate(nextProps, nextState, nextContext)
+componentDidUpdate(prevProps, prevState, prevContext)
+
+4、 在无状态组件中可以通过参数传入
+
+```
+function D(props, context) {
+  return (
+    <div>{this.context.user.name}</div>
+  );
+}
+
+D.contextTypes = {
+  user: React.PropTypes.object.isRequired
+}
+```
+
+
+
 # 10、父子组件，跨级组件间通信，兄弟组件间通信的方法有哪些？
 跨级组件间的通信：使用react context 上下文，观察者模式。
 兄弟组件间的通信：使用观察者模式，通过共同的父组件来传递信息；
@@ -138,6 +342,52 @@ proxy在目标对象的外层搭建了一层拦截，外界对目标对象的某
 ## 2、reflect
 reflect 新增的全局对象，里面包含了Object的一些方法
 # 13、es7 装饰器 decorator
+
+装饰器可以对类、类的属性进行装饰，不能对函数装饰
+
+```
+import React from 'react'
+
+// 装饰器可以对类、类的属性进行修饰
+// target表示类，key表示类的属性，descriptor表示类的属性的值
+function decorateArmour(target, key, descriptor) {
+  const method = descriptor.value;
+  let moreDef = 100;
+  let ret;
+  descriptor.value = (...args) => {
+    args[0] += moreDef;
+    ret = method.apply(target, args);
+    return ret;
+  }
+  return descriptor;
+}
+
+class Man extends React.Component {
+  constructor(def = 2, atk = 3, hp = 3) {
+    this.init(def, atk, hp);
+  }
+
+  @decorateArmour
+  init(def, atk, hp) {
+    this.def = def; // 防御值
+    this.atk = atk;  // 攻击力
+    this.hp = hp;  // 血量
+  }
+  toString() {
+    return `防御力:${this.def},攻击力:${this.atk},血量:${this.hp}`;
+  }
+  render() {
+    <div>
+      asdfa
+    </div>
+  }
+}
+
+export default Man
+```
+
+
+
 # 14、es6 Object.assign是ES6新添加的接口，主要的用途是用来合并多个JavaScript的对象。
 
 ```
@@ -217,7 +467,7 @@ class NameForm extends React.Component {
     super(props);
     this.handleSubmit = this.handleSubmit.bind(this);
     /**React 16.3版本后，使用此方法来创建ref。将其赋值给一个变量，通过ref挂载在dom节点或组件上，该ref的current属性将能拿到dom节点或组件的实例**/
-    this.input = React.createRef(); 
+    this.input = React.createRef(); // 也可以用uesRef这个hook来创建
   }
 
   handleSubmit(event) {
@@ -279,4 +529,108 @@ const dom = findDOMNode(this.node); // 通过findDOMNode获取实例对应的真
 ReactDOM.unmountComponentAtNode(document.getElementByTagName('body'));// 把body下面的react元素卸载掉
 ```
 
+#  20、react hook使用
+
+hook是react16.8的新增特性，它可以让你在不编写class的情况下使用state以及其它react特性
+
+## 1、react hook 类型
+
+state hook、effect hook 、context hook、ref hook 自定义hook 等
+
+## 2、hook的使用规则
+
+只能在最顶层使用hook：**不要在循环，条件或嵌套函数中调用 Hook** ，因为React 靠的是 Hook 调用的顺序。 
+
+只在react函数式组件中调用hook
+
+## 3、自定义hook使用
+
+### 1、自定义 Hook 是一个函数，其名称以 “use” 开头，函数内部可以调用其他的 Hook。
+
+```
+import React, { useState, useEffect } from 'react';
+// 自定义hook
+function useFriendStatus(friendID) {
+  const [isOnline, setIsOnline] = useState(null);
+
+  useEffect(() => {
+    function handleStatusChange(status) {
+      setIsOnline(status.isOnline);
+    }
+
+    ChatAPI.subscribeToFriendStatus(friendID, handleStatusChange);
+    return () => {
+      ChatAPI.unsubscribeFromFriendStatus(friendID, handleStatusChange);
+    };
+  });
+
+  return isOnline;
+}
+// 使用自定义hook
+function FriendStatus(props) {
+  const isOnline = useFriendStatus(props.friend.id);
+
+  if (isOnline === null) {
+    return 'Loading...';
+  }
+  return isOnline ? 'Online' : 'Offline';
+}
+```
+
+### 2、自定义hook必须以use开头，不以use开头，react将无法判断自定义hook里是否包含了其内部的hook调用。
+
+### 3、在两个组件中使用相同的hook不会共享state，因为自定义hook是重用状态逻辑的机制，其实自定义hook是一个具有返回值的纯函数，返回的其实是不同的值，因此不会共享state
+
+# 21、react 高阶函数
+
+1、高阶函数本质就是一个函数，该函数接受一个组件作为参数，并返回一个新的组件。
+
+我们需要一个抽象，允许我们在一个地方定义逻辑，并在许多组件之间共享它。这正是高阶组件擅长的地方。
+
+优点：HOC 不会修改传入的组件，也不会使用继承来复制其行为。相反，HOC 通过将组件*包装*在容器组件中来*组成*新组件。HOC 是纯函数，没有副作用。
+
+2、属性代理：高阶组件通过被包裹的react组件来操纵props，其实就是js面向对象编程里的一个模式，代理模式，核心功能由核心组件组件编写，要给这个组件添加其它功能时，通过代理模式，react中的高阶组件模式，组合出一个新的组件，包含核心功能和新添加的功能，这样可以在不更改核心组件的前提下增加新的功能。
+
+3、反向继承：高阶组件继承于被包裹的组件
+
+```
+import React,{Component} from "react";
  
+// 用于预先 将业务组件，进行数据的封装，便于我们 方便获取数据
+// 反向继承 交互的封装，
+const loading = Com  => {
+	class LoadingComponent extends Com {
+		
+		showLoading(){
+			console.log('loading')
+		}
+		hideLoading(){
+			console.log('hide')
+		}
+	}
+	return LoadingComponent
+}
+ 
+ 
+ 
+@loading // 装饰器的使用，是在运行是调用，反向继承，返回一个新的组件
+class User extends Component{
+	render() {
+		return <div>user</div>
+	}
+ 
+	componentDidMount() {
+		this.showLoading()
+		//http
+		this.hideLoading()
+	}
+}
+ 
+class App extends Component{
+	render() {
+		return <User/>
+	}
+}
+export default App 
+```
+
