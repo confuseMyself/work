@@ -246,9 +246,102 @@ D.contextTypes = {
 }
 ```
 
+5、react16.8版本的context详细使用文档的链接
+
+[react16.8版本的context使用链接]: https://react.docschina.org/docs/context.html#reactcreatecontext
+
+6、新版context使用的一些注意事项
+
+- 当 Provider 的 `value` 值发生变化时，它内部的所有消费组件都会重新渲染。Provider 及其内部 consumer 组件都不受制于 `shouldComponentUpdate` 函数，因此当 consumer 组件在其祖先组件退出更新的情况下也能更新。 
+- 每个组件可以消费多个context，为了确保 context 快速进行重渲染，React 需要使每一个 consumers 组件的 context 在组件树中成为一个单独的节点。 
+
+```
+class 定义的组件消费多个context
+// Theme context，默认的 theme 是 “light” 值
+const ThemeContext = React.createContext('light');
+
+// 用户登录 context
+const UserContext = React.createContext({
+  name: 'Guest',
+});
+
+class App extends React.Component {
+  render() {
+    const {signedInUser, theme} = this.props;
+
+    // 提供初始 context 值的 App 组件
+    return (
+      <ThemeContext.Provider value={theme}>
+        <UserContext.Provider value={signedInUser}>
+          <Layout />
+        </UserContext.Provider>
+      </ThemeContext.Provider>
+    );
+  }
+}
+
+// 函数式组件消费多个context
+// 一个组件可能会消费多个 context
+function Content() {
+  return (
+    <ThemeContext.Consumer>
+      {theme => (
+        <UserContext.Consumer>
+          {user => (
+            <ProfilePage user={user} theme={theme} />
+          )}
+        </UserContext.Consumer>
+      )}
+    </ThemeContext.Consumer>
+  );
+}
+```
+
+- Context 主要应用场景在于*很多*不同层级的组件需要访问同样一些的数据 
+- 使用 context, 我们可以避免通过中间元素传递 props： 
+
+```
+// Context 可以让我们无须明确地传遍每一个组件，就能将值深入传递进组件树。
+// 为当前的 theme 创建一个 context（“light”为默认值）。
+const ThemeContext = React.createContext('light');
+
+class App extends React.Component {
+  render() {
+    // 使用一个 Provider 来将当前的 theme 传递给以下的组件树。
+    // 无论多深，任何组件都能读取这个值。
+    // 在这个例子中，我们将 “dark” 作为当前的值传递下去。
+    return (
+      <ThemeContext.Provider value="dark">
+        <Toolbar />
+      </ThemeContext.Provider>
+    );
+  }
+}
+
+// 中间的组件再也不必指明往下传递 theme 了。
+function Toolbar(props) {
+  return (
+    <div>
+      <ThemedButton />
+    </div>
+  );
+}
+
+class ThemedButton extends React.Component {
+  // 指定 contextType 读取当前的 theme context。
+  // React 会往上找到最近的 theme Provider，然后使用它的值。
+  // 在这个例子中，当前的 theme 值为 “dark”。
+  static contextType = ThemeContext;
+  render() {
+    return <Button theme={this.context} />;
+  }
+}
+```
+
 
 
 # 10、父子组件，跨级组件间通信，兄弟组件间通信的方法有哪些？
+
 跨级组件间的通信：使用react context 上下文，观察者模式。
 兄弟组件间的通信：使用观察者模式，通过共同的父组件来传递信息；
 父子组件间的通信：父组件通过props向子组件传递信息，子组件通过调用父组件传过来的函数方法来向父组件传递信息；
@@ -581,6 +674,8 @@ function FriendStatus(props) {
 
 ### 3、在两个组件中使用相同的hook不会共享state，因为自定义hook是重用状态逻辑的机制，其实自定义hook是一个具有返回值的纯函数，返回的其实是不同的值，因此不会共享state
 
+4、useState hook 在第一挂载时，会保存初始设置的状态，在组件更新时，useEffect会重新执行react函数式组件定义的函数，会根据useEffect的参数来决定执行挂载后，更新后执行，但是更新的时候，组件的状态是会保存最初挂载时设置的状态，只用通过setData函数来更改，组件的状态才会改变
+
 # 21、react 高阶函数
 
 1、高阶函数本质就是一个函数，该函数接受一个组件作为参数，并返回一个新的组件。
@@ -632,5 +727,57 @@ class App extends Component{
 	}
 }
 export default App 
+```
+
+# 22、react 16新的生命周期
+
+- 创建期：constructor->getDerivedStateFromProps->render->react更新dom和refs->componentDidMount
+- 更新期：在new props 、setState()、forceUpdate()：getDerivedStateFromProps=》shouldComponentUpdate=》render=》getSnapshotBeforeUpdate=》react更新dom和refs=》componentDidUpdate
+- 卸载时：componentWillUnmount
+
+```
+import React, { Component } from 'react';
+import './index.less';
+export default class element extends Component {
+    constructor(props) {
+        super(props)
+        this.state = {
+        }
+    }
+    // 类的静态函数，不能在静态函数里调用this
+    // 1、构建组件时,在constructor之后调用；2、setState之后会被调用；3、接受到新的props会调用
+    // return 之后的obj表示更新state，但是此时state还未改变，
+    // 如果使用setState()直接更改state状态，此时的prevState === setstate之后的state
+    static getDerivedStateFromProps(nextProps, prevState) {
+        return null
+    }
+    // 在更新期调用
+    // 通过getDerivedStateFromProps return改变的state，此时的state还未改变
+    // 但是通过setState()直接更改state状态，nextState === setstate之后的state
+    shouldComponentUpdate(nextProps, nextState) {
+        return true
+    }
+    //在render函数之后，componentDidUpdate之前调用，此时state已经改变
+    //return 之后的数据将作为第三个参数传递给被componentDidUpdate接收到
+    getSnapshotBeforeUpdate(prevProps, prevState) {
+        return null
+    }
+    // 在render函数之后调用,该生命周期不经常调用，主要是用于更新后的某些操作
+    componentDidUpdate(prevProps, prevState, data) {
+    }
+    // 组件挂载完成时调用，在整个生命周期只调用一次
+    componentDidMount() {
+    }
+    componentWillUnmount() {
+    }
+    // 此时的state,props已改变
+    render() {
+        return (
+            <div className="page">
+
+            </div>
+        );
+    }
+}
 ```
 
