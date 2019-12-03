@@ -67,6 +67,7 @@ module.exports = {
 ```
 
 3.常用的loader列举，loader 是 对某种类型的文件的解析，loader的顺序是从下往上加载的
+
 - css：css-loader,style-loader 等css处理loader
 - url-loader,image-loader 等图片字体文件等资源的处理loader
 - less-loader,sass-loader,babel-loader 等编译的loader
@@ -1102,14 +1103,17 @@ module.exports = {
             loader: 'img-loader',
             options: {
               plugins: [
-                require('imagemin-pngquant')({
-                  speed: 2//1-11
+                // 压缩png
+                require('imagemin-pngquant')({ 
+                  speed: 2  //1-11
                 }),
+                // 压缩jpg
                 require('imagemin-mozjpeg')({
-                  quality: 80//1-100
+                  quality: 80  //1-100
                 }),
+                // 压缩gif
                 require('imagemin-gifsicle')({
-                  optimizationLevel: 1//1,2,3
+                  optimizationLevel: 1   //1,2,3
                 })
               ]
             }
@@ -1354,7 +1358,7 @@ module.exports=function(){
 // 这种export 的代码不能tree-shaking
 ```
 
-```
+```javascript
 // 对这种代码 比较友好
 export const a=function(){
 	console.log('i am a');
@@ -1363,4 +1367,34 @@ export const b=function(){
 	console.log('i am b');
 }
 ```
+
+# 17、webpack 优化打包速度
+
+***有哪些可以优化的点***
+
+- 项目本省
+
+​       减少依赖嵌套深度
+
+​       使用尽可能少的处理
+
+- webpack层面
+
+​       dll处理：预先处理第三方包的处理，预先把第三方包打包
+
+​       通过include减少loader范围
+
+​       happyPack：开启node多进程来处理webpack打包，如果处理的文件少，可能适得其反
+
+​       uglify优化：webpack4.x废除uglify，webpack4.x里已经自带了代码压缩缓存功能。
+
+​       减少resolve,sourcemap,cache-loader
+
+​       用新版本的node和webpack
+
+***长缓存优化***
+
+- 把hash改为chunkhash：哪个模块改动了，hash值才会变化
+- NamedChunksPlugin和NamedModulesPlugin （webpack自带）
+- mini-css-extract-plugin：css代码分离，按模块提取
 
